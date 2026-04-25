@@ -1,0 +1,263 @@
+version: '3.9'
+
+services:
+  # ============================================
+  # Databases
+  # ============================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: rzex-postgres
+    environment:
+      POSTGRES_USER: rzex
+      POSTGRES_PASSWORD: rzex_dev_password
+      POSTGRES_DB: rzex
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rzex"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rzex-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: rzex-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rzex-network
+
+  mongo:
+    image: mongo:7
+    container_name: rzex-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: rzex
+      MONGO_INITDB_ROOT_PASSWORD: rzex_dev_password
+      MONGO_INITDB_DATABASE: rzex_market
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rzex-network
+
+  # ============================================
+  # Backend Services
+  # ============================================
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    container_name: rzex-api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - API_GATEWAY_PORT=3000
+      - USER_SERVICE_URL=http://user-service:3001
+      - TRADING_ENGINE_URL=http://trading-engine:3002
+      - WALLET_SERVICE_URL=http://wallet-service:3003
+      - MARKET_DATA_URL=http://market-data:3004
+      - NOTIFICATION_URL=http://notification-service:3005
+    depends_on:
+      user-service:
+        condition: service_healthy
+      trading-engine:
+        condition: service_healthy
+      wallet-service:
+        condition: service_healthy
+      market-data:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+    networks:
+      - rzex-network
+
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    container_name: rzex-user-service
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - USER_SERVICE_PORT=3001
+      - JWT_SECRET=rzex-dev-secret-change-in-production
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=rzex
+      - POSTGRES_PASSWORD=rzex_dev_password
+      - POSTGRES_DB=rzex
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - rzex-network
+
+  trading-engine:
+    build:
+      context: ./services/trading-engine
+      dockerfile: Dockerfile
+    container_name: rzex-trading-engine
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - TRADING_ENGINE_PORT=3002
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=rzex
+      - POSTGRES_PASSWORD=rzex_dev_password
+      - POSTGRES_DB=rzex
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - rzex-network
+
+  wallet-service:
+    build:
+      context: ./services/wallet-service
+      dockerfile: Dockerfile
+    container_name: rzex-wallet-service
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - WALLET_SERVICE_PORT=3003
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=rzex
+      - POSTGRES_PASSWORD=rzex_dev_password
+      - POSTGRES_DB=rzex
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - rzex-network
+
+  market-data:
+    build:
+      context: ./services/market-data-service
+      dockerfile: Dockerfile
+    container_name: rzex-market-data
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=development
+      - MARKET_DATA_PORT=3004
+      - MONGO_URI=mongodb://rzex:rzex_dev_password@mongo:27017/rzex_market?authSource=admin
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - rzex-network
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    container_name: rzex-notification-service
+    ports:
+      - "3005:3005"
+    environment:
+      - NODE_ENV=development
+      - NOTIFICATION_SERVICE_PORT=3005
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=rzex
+      - POSTGRES_PASSWORD=rzex_dev_password
+      - POSTGRES_DB=rzex
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - rzex-network
+
+  # ============================================
+  # Frontend
+  # ============================================
+  web:
+    build:
+      context: ./frontend/web
+      dockerfile: Dockerfile
+    container_name: rzex-web
+    ports:
+      - "3010:3010"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://api-gateway:3000
+      - NEXT_PUBLIC_WS_URL=ws://market-data:3004/ws
+    depends_on:
+      - api-gateway
+    networks:
+      - rzex-network
+
+  # ============================================
+  # Monitoring
+  # ============================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: rzex-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - rzex-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: rzex-grafana
+    ports:
+      - "3020:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infra/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    depends_on:
+      - prometheus
+    networks:
+      - rzex-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  mongo_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  rzex-network:
+    driver: bridge

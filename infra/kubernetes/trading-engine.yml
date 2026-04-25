@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trading-engine
+  namespace: rzex
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: trading-engine
+  template:
+    metadata:
+      labels:
+        app: trading-engine
+    spec:
+      containers:
+        - name: trading-engine
+          image: rzex-trading-engine:latest
+          ports:
+            - containerPort: 3002
+          envFrom:
+            - secretRef:
+                name: rzex-db-secrets
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: TRADING_ENGINE_PORT
+              value: "3002"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3002
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3002
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trading-engine
+  namespace: rzex
+spec:
+  selector:
+    app: trading-engine
+  ports:
+    - port: 3002
+      targetPort: 3002
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: trading-engine-hpa
+  namespace: rzex
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: trading-engine
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
