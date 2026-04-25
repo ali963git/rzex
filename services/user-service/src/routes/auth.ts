@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { body, validationResult } from 'express-validator';
 import { pool } from '../config/database';
@@ -9,6 +9,10 @@ import { logger } from '../config/logger';
 import { authenticate, AuthRequest } from '../middleware/auth';
 
 const router = Router();
+
+function createToken(payload: object, expiresIn: string = config.jwt.expiration): string {
+  return jwt.sign(payload, config.jwt.secret, { expiresIn: expiresIn as unknown as number });
+}
 
 // POST /api/auth/register
 router.post(
@@ -48,11 +52,7 @@ router.post(
       );
 
       const user = result.rows[0];
-      const token = jwt.sign(
-        { userId: user.id, role: user.role },
-        config.jwt.secret,
-        { expiresIn: config.jwt.expiration },
-      );
+      const token = createToken({ userId: user.id, role: user.role });
 
       const refreshToken = uuidv4();
       await pool.query(
@@ -123,11 +123,7 @@ router.post(
         return;
       }
 
-      const token = jwt.sign(
-        { userId: user.id, role: user.role },
-        config.jwt.secret,
-        { expiresIn: config.jwt.expiration },
-      );
+      const token = createToken({ userId: user.id, role: user.role });
 
       const refreshToken = uuidv4();
       await pool.query(
@@ -226,9 +222,7 @@ router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
     await pool.query('DELETE FROM refresh_tokens WHERE token = $1', [refreshToken]);
 
     const { user_id, role } = result.rows[0];
-    const newToken = jwt.sign({ userId: user_id, role }, config.jwt.secret, {
-      expiresIn: config.jwt.expiration,
-    });
+    const newToken = createToken({ userId: user_id, role });
 
     const newRefreshToken = uuidv4();
     await pool.query(

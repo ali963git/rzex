@@ -11,7 +11,7 @@ export const pool = new Pool({
   max: 10,
 });
 
-pool.on('error', (err) => {
+pool.on('error', (err: Error) => {
   logger.error('Unexpected PostgreSQL error', { error: err.message });
 });
 
