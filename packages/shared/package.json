@@ -1,0 +1,12 @@
+{
+  "name": "@rzex/shared",
+  "version": "1.0.0",
+  "description": "Shared types, utilities and constants for RZEX platform",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  }
+}

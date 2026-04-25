@@ -1,0 +1,16 @@
+{
+  "name": "rzex-platform",
+  "version": "1.0.0",
+  "description": "RZEX — Professional Cryptocurrency Trading Platform",
+  "private": true,
+  "scripts": {
+    "dev": "docker compose up --build",
+    "dev:down": "docker compose down -v",
+    "deploy": "bash scripts/deploy.sh"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "RZEX Team",
+  "license": "MIT"
+}

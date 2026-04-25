@@ -1,0 +1,84 @@
+name: RZEX CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-build:
+    name: Lint & Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - services/api-gateway
+          - services/user-service
+          - services/trading-engine
+          - services/wallet-service
+          - services/market-data-service
+          - services/notification-service
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.service }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.service }}
+        run: npm ci
+
+      - name: TypeScript check
+        working-directory: ${{ matrix.service }}
+        run: npm run typecheck
+
+      - name: Build
+        working-directory: ${{ matrix.service }}
+        run: npm run build
+
+  frontend:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend/web
+        run: npm ci
+
+      - name: TypeScript check
+        working-directory: frontend/web
+        run: npm run typecheck
+
+      - name: Build
+        working-directory: frontend/web
+        run: npm run build
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [lint-and-build, frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker images
+        run: docker compose build
+
+      - name: Verify services start
+        run: |
+          docker compose up -d postgres redis mongo
+          sleep 10
+          docker compose ps

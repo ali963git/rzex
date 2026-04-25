@@ -1,0 +1,34 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['api-gateway:3000']
+    metrics_path: /health
+
+  - job_name: 'user-service'
+    static_configs:
+      - targets: ['user-service:3001']
+    metrics_path: /health
+
+  - job_name: 'trading-engine'
+    static_configs:
+      - targets: ['trading-engine:3002']
+    metrics_path: /health
+
+  - job_name: 'wallet-service'
+    static_configs:
+      - targets: ['wallet-service:3003']
+    metrics_path: /health
+
+  - job_name: 'market-data'
+    static_configs:
+      - targets: ['market-data:3004']
+    metrics_path: /health
+
+  - job_name: 'notification-service'
+    static_configs:
+      - targets: ['notification-service:3005']
+    metrics_path: /health
