@@ -3,6 +3,7 @@
 import React, { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,23 +18,12 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(
-        (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000') + '/api/auth/login',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        },
-      );
-      const data = await res.json();
+      const result = await api.login(email, password);
 
-      if (data.success) {
-        localStorage.setItem('rzex_token', data.data.token);
-        localStorage.setItem('rzex_refresh_token', data.data.refreshToken);
-        localStorage.setItem('rzex_user', JSON.stringify(data.data.user));
+      if (result.success) {
         router.push('/');
       } else {
-        setError(data.error?.message || 'Login failed');
+        setError(result.error?.message || 'Invalid email or password');
       }
     } catch {
       setError('Network error. Please try again.');
