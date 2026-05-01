@@ -3,6 +3,7 @@
 import React, { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -37,27 +38,12 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(
-        (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000') + '/api/auth/register',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: formData.email,
-            username: formData.username,
-            password: formData.password,
-          }),
-        },
-      );
-      const data = await res.json();
+      const result = await api.register(formData.email, formData.username, formData.password);
 
-      if (data.success) {
-        localStorage.setItem('rzex_token', data.data.token);
-        localStorage.setItem('rzex_refresh_token', data.data.refreshToken);
-        localStorage.setItem('rzex_user', JSON.stringify(data.data.user));
+      if (result.success) {
         router.push('/');
       } else {
-        setError(data.error?.message || 'Registration failed');
+        setError(result.error?.message || 'Registration failed');
       }
     } catch {
       setError('Network error. Please try again.');
