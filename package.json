@@ -1,16 +1,50 @@
 {
-  "name": "rzex-platform",
+  "name": "rzex",
   "version": "1.0.0",
-  "description": "RZEX — Professional Cryptocurrency Trading Platform",
-  "private": true,
+  "description": "Professional cryptocurrency trading platform",
+  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "dev": "docker compose up --build",
-    "dev:down": "docker compose down -v",
-    "deploy": "bash scripts/deploy.sh"
+    "start": "docker-compose up -d",
+    "stop": "docker-compose down",
+    "logs": "docker-compose logs -f",
+    "build": "docker-compose build",
+    "dev": "docker-compose up",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "jest --config jest.config.js --testPathPattern=unit",
+    "test:integration": "jest --config jest.config.js --testPathPattern=integration",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "db:init": "sh scripts/init-db.sh",
+    "db:migrate": "npm run db:init",
+    "db:seed": "sh scripts/seed-db.sh",
+    "deploy": "sh scripts/deploy.sh",
+    "deploy:aws": "sh scripts/deploy-aws.sh",
+    "deploy:k8s": "kubectl apply -f infrastructure/kubernetes/",
+    "clean": "docker-compose down -v && rm -rf node_modules"
+  },
+  "keywords": [
+    "trading",
+    "cryptocurrency",
+    "platform",
+    "exchange"
+  ],
+  "author": "ali963git",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0",
+    "prettier": "^3.0.0",
+    "ts-jest": "^29.0.0",
+    "typescript": "^5.0.0"
   },
   "engines": {
-    "node": ">=18.0.0"
-  },
-  "author": "RZEX Team",
-  "license": "MIT"
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
 }
