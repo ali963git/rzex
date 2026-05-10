@@ -1,5 +1,5 @@
 {
-  "name": "@rzex/web",
+  "name":"@rzex/web",
   "version": "1.0.0",
   "description": "RZEX Web Trading Platform",
   "private": true,
