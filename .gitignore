@@ -1,47 +1,49 @@
-# Dependencies
-node_modules/
-.pnp
-.pnp.js
+# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
-# Build
-dist/
-build/
-.next/
-out/
+# compiled output
+dist
+tmp
+out-tsc
 *.tsbuildinfo
-next-env.d.ts
+.expo
+.expo-shared
 
-# Environment
-.env
-.env.local
-.env.production
+# dependencies
+node_modules
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
 
-# OS
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+
+# System Files
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-logs/
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
 
-# Docker
-docker-compose.override.yml
-
-# Coverage
-coverage/
-.nyc_output/
-
-# Temporary
-tmp/
-temp/
-
-# Python
-__pycache__/
-*.pyc
-.venv/
+# Replit
+.cache/
+.local/
