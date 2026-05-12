@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-rzex-bg: #0b0e11;
+  --color-rzex-card: #1e2329;
+  --color-rzex-border: #2b3139;
+  --color-rzex-text: #eaecef;
+  --color-rzex-text-secondary: #848e9c;
+  --color-rzex-accent: #f0b90b;
+  --color-rzex-green: #0ecb81;
+  --color-rzex-red: #f6465d;
+  --color-rzex-blue: #1e88e5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: #0b0e11;
+  color: #eaecef;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+[dir='rtl'] {
+  text-align: right;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0e11;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2b3139;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #848e9c;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th, td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid #2b3139;
+  font-size: 12px;
+}
+
+th {
+  color: #848e9c;
+  font-weight: 500;
+}
+
+.price-up { color: #0ecb81; }
+.price-down { color: #f6465d; }
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
